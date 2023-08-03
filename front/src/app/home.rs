@@ -3,8 +3,8 @@ use leptos::*;
 #[component]
 pub fn Home(cx: Scope) -> impl IntoView {
     view! { cx,
-      <div class="bg-blue-500">
-        <h1>Hello from Home</h1>
-      </div>
+        <div class="m-4">
+            <a href="login">Licorne Gaming</a>
+        </div>
     }
 }
