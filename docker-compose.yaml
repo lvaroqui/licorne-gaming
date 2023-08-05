@@ -20,7 +20,7 @@ services:
     volumes:
       - ./front:/opt/front
     working_dir: /opt/front
-    command: trunk serve --release --address 0.0.0.0
+    command: trunk serve --address 0.0.0.0
     ports:
       - 8080:8080
 

@@ -13,7 +13,7 @@ pub fn App(cx: Scope) -> impl IntoView {
         <Router>
             <nav>
             </nav>
-            <main class="h-screen w-screen bg-gray-200">
+            <main class="w-screen h-screen bg-gray-300">
                 <Routes>
                     <Route path="/" view=Home/>
                     <Route path="/login" view=Login/>
