@@ -19,6 +19,6 @@ services:
       - ./front:/opt/front
       - /opt/front/target
     working_dir: /opt/front
-    command: trunk serve --address 0.0.0.0
+    command: trunk -v serve --port 8080 --address 0.0.0.0 --proxy-backend=http://back:3000/api/
     ports:
       - 8080:8080
