@@ -1,4 +1,3 @@
-use gloo_net::http::Request;
 use leptos::*;
 use leptos_router::use_navigate;
 
@@ -6,12 +5,15 @@ use crate::components::Button;
 use crate::components::TextInput;
 
 async fn load_data(name: &str) -> String {
-    let resp = Request::get(&format!("/api/hello?name={}", name))
-        .send()
+    let config = openapi::apis::configuration::Configuration {
+        base_path: "http://localhost:8080/api".to_string(),
+        ..Default::default()
+    };
+    let a = openapi::apis::default_api::hello(&config, name)
         .await
-        .unwrap();
+        .map(|a| a.name);
 
-    resp.text().await.unwrap()
+    a.unwrap()
 }
 
 #[component]
@@ -24,21 +26,13 @@ pub fn Login(cx: Scope) -> impl IntoView {
     };
 
     // our resource
-    let async_data = create_resource(
-        cx,
-        login,
-        // every time `count` changes, this will run
-        |value| async move {
-            log!("loading data from API");
-            load_data(&value).await
-        },
-    );
+    let async_data = create_resource(cx, login, |value| async move { load_data(&value).await });
 
     view! { cx,
         <div class="flex items-center justify-center w-full h-full">
             <div class="max-sm:container flex flex-col w-full max-w-sm p-3 m-4 border-2 border-gray-900 shadow-xl bg-slate-700 rounded-xl">
                 <h1 class="mb-2 text-3xl font-bold text-white">Login</h1>
-                <TextInput value=login placeholder="Login" />
+                <TextInput value=login placeholder="Logian" />
                 <TextInput value=password placeholder="Password" password=true />
                 <Button on:click=go_to_home>Login</Button>
 

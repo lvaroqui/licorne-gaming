@@ -1,6 +1,6 @@
 FROM alpine:3.18
 
-RUN apk add --no-cache rustup musl-dev gcc
+RUN apk add --no-cache rustup musl-dev gcc curl bash
 
 # Install rust
 ENV RUSTUP_HOME /opt/rustup_home

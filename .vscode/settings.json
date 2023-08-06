@@ -21,5 +21,8 @@
   },
   "rust-analyzer.check.extraArgs": [
     "--target-dir=target/analyzer"
+  ],
+  "files.watcherInclude": [
+    "openapi/out/**"
   ]
 }
