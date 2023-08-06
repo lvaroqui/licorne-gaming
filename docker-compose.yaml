@@ -1,18 +1,17 @@
 version: "3.1"
 
 services:
-  # logic:
-  #   build: docker/logic
-  #   init: true
-  #   environment:
-  #     CARGO_TARGET_DIR: /opt/target
-  #   volumes:
-  #     - ./:/opt/app:ro
-  #     - ./games/${GAME}/:/opt/app/games/${GAME}
-  #     - rust-cargo-home:/usr/local/cargo
-  #     - rust-target-dir:/opt/target
-  #   working_dir: /opt/app/games/${GAME}/front/logic
-  #   command: cargo watch -- wasm-pack build -t web
+  back:
+    build: back/docker
+    init: true
+    volumes:
+      - ./back:/opt/back
+    working_dir: /opt/back
+    command: cargo watch -x run
+    ports:
+      - 3000:3000
+    environment:
+      - CARGO_TARGET_DIR=/opt/cargo_target_dir
 
   front:
     build: front/docker
@@ -23,7 +22,5 @@ services:
     command: trunk serve --address 0.0.0.0
     ports:
       - 8080:8080
-
-# volumes:
-#   rust-cargo-home:
-#   rust-target-dir:
+    environment:
+      - CARGO_TARGET_DIR=/opt/cargo_target_dir
