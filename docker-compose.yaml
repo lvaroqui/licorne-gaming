@@ -6,21 +6,19 @@ services:
     init: true
     volumes:
       - ./back:/opt/back
+      - /opt/front/target
     working_dir: /opt/back
-    command: cargo watch -x run
+    command: cargo watch -- cargo run --color always
     ports:
       - 3000:3000
-    environment:
-      - CARGO_TARGET_DIR=/opt/cargo_target_dir
 
   front:
     build: front/docker
     init: true
     volumes:
       - ./front:/opt/front
+      - /opt/front/target
     working_dir: /opt/front
     command: trunk serve --address 0.0.0.0
     ports:
       - 8080:8080
-    environment:
-      - CARGO_TARGET_DIR=/opt/cargo_target_dir
