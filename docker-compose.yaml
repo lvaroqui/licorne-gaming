@@ -1,31 +1,31 @@
 version: "3.1"
 
 services:
+  # BackEnd service running PoemOpenAPI.
   back:
     build: back/docker
     init: true
     volumes:
-      - ./scripts:/opt/scripts
+      - ./scripts:/opt/scripts:ro
       - ./back:/opt/back
-      - ./openapi:/opt/openapi
-      - /opt/back/target
+      - ./openapi:/opt/openapi # cmd.sh will write spec.json here.
+
+      # Use anonymous volumes cache data between on container config change.
+      - back_cargo_target_dir:/opt/cargo_target_dir
+      - back_cargo_home:/opt/cargo_home
     working_dir: /opt/back
+    environment:
+      - CARGO_TARGET_DIR=/opt/cargo_target_dir
     command: cargo watch -- ./docker/cmd.sh
     ports:
       - 3000:3000
+    healthcheck:
+      test: curl -f http://localhost:3000/api/spec
+      interval: 2s
+      timeout: 2s
+      start_period: 4m
 
-  front:
-    build: front/docker
-    init: true
-    volumes:
-      - ./front:/opt/front
-      - ./openapi/out:/opt/openapi/out
-      - /opt/front/target
-    working_dir: /opt/front
-    command: trunk -v serve --port 8080 --address 0.0.0.0 -w /opt/front -w /opt/openapi/out/spec.json.md5 --proxy-backend=http://back:3000/api/
-    ports:
-      - 8080:8080
-
+  # Generate front reqwest client from spec.json.
   openapi:
     build: openapi/docker
     init: true
@@ -33,3 +33,49 @@ services:
      - ./openapi:/opt/openapi
     working_dir: /opt/openapi
     command: /opt/openapi/docker/cmd.sh
+    depends_on:
+      back:
+        condition: service_healthy
+    healthcheck:
+      test: stat /opt/openapi/out/spec.json.md5
+      interval: 1s
+      timeout: 1s
+      start_period: 4m
+
+  # FrontEnd running leptos and generated reqwest client from openapi.
+  front:
+    build: front/docker
+    init: true
+    volumes:
+      - ./front:/opt/front
+      - ./openapi/out:/opt/openapi/out:ro
+
+      # Use anonymous volumes to cache data on container config change.
+      - front_cargo_target_dir:/opt/cargo_target_dir
+      - front_cargo_home:/opt/cargo_home
+      - front_trunk_cache:/root/.cache/trunk
+    working_dir: /opt/front
+    environment:
+      - CARGO_TARGET_DIR=/opt/cargo_target_dir
+    command: >
+      trunk -v serve --port 8080 --address 0.0.0.0
+        -w /opt/front -w /opt/openapi/out/spec.json.md5
+        -i /opt/front/target
+        --proxy-backend=http://back:3000/api/
+    ports:
+      - 8080:8080
+    depends_on:
+      openapi:
+        condition: service_healthy
+    healthcheck:
+      test: curl -f http://localhost:8080/
+      interval: 5s
+      timeout: 2s
+      start_period: 4m
+
+volumes:
+  back_cargo_target_dir:
+  back_cargo_home:
+  front_cargo_target_dir:
+  front_cargo_home:
+  front_trunk_cache:
