@@ -9,4 +9,5 @@ RUN rustup-init -y --default-toolchain nightly --target wasm32-unknown-unknown
 ENV PATH /opt/cargo_home/bin:$PATH
 
 # Install tools
-RUN cargo install --locked trunk
+RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | sh
+RUN cargo binstall --no-confirm trunk
