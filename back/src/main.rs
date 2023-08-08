@@ -1,22 +1,30 @@
-use poem::{listener::TcpListener, Request, Route};
-use poem_openapi::{
-    auth::ApiKey, param::Query, payload::Json, types::Example, Object, OpenApi, OpenApiService,
-    SecurityScheme,
+use std::time::Duration;
+
+use bearer_from_cookie_to_header::BearerFromCookieToHeader;
+use poem::{
+    listener::TcpListener,
+    middleware::CookieJarManager,
+    web::cookie::{Cookie, CookieJar},
+    EndpointExt, Request, Route,
 };
+use poem_openapi::{
+    param::Query, payload::Json, types::Example, Object, OpenApi, OpenApiService, SecurityScheme,
+};
+
+mod bearer_from_cookie_to_header;
 
 struct Api;
 
 #[derive(SecurityScheme)]
-#[oai(
-    ty = "api_key",
-    key_name = "X-API-Key",
-    key_in = "header",
-    checker = "api_checker"
-)]
+#[oai(ty = "bearer", checker = "api_checker")]
 struct AppAuthorization(String);
 
-async fn api_checker(_req: &Request, _api_key: ApiKey) -> Option<String> {
-    Some("toto".to_string())
+async fn api_checker(_req: &Request, bearer: poem_openapi::auth::Bearer) -> Option<String> {
+    if &bearer.token == "tototiti" {
+        Some(bearer.token)
+    } else {
+        None
+    }
 }
 
 #[derive(Debug, Object)]
@@ -49,11 +57,21 @@ impl Api {
     async fn index_protected(
         &self,
         name: Query<String>,
-        _auth: AppAuthorization,
+        auth: AppAuthorization,
     ) -> Json<HelloResponse> {
         Json(HelloResponse {
-            name: "Hello ".to_string() + &name.0,
+            name: "Hello ".to_string() + &name.0 + &auth.0,
         })
+    }
+
+    /// Retrieve the name of the user
+    #[oai(path = "/login", method = "get")]
+    async fn login(&self, cookie_jar: &CookieJar) {
+        let mut cookie = Cookie::new_with_str("Bearer", "tototiti");
+        cookie.set_http_only(true);
+        cookie.set_secure(true);
+        cookie.set_max_age(Duration::from_secs(3600 * 24 * 365));
+        cookie_jar.add(cookie);
     }
 }
 
@@ -65,7 +83,9 @@ async fn main() -> Result<(), std::io::Error> {
     let app = Route::new()
         .nest("/api", api_service)
         .nest("/api/docs", ui)
-        .nest("/api/spec", spec);
+        .nest("/api/spec", spec)
+        .with(BearerFromCookieToHeader)
+        .with(CookieJarManager::new());
 
     poem::Server::new(TcpListener::bind("0.0.0.0:3000"))
         .run(app)
