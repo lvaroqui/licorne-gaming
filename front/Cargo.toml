@@ -6,7 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+console_error_panic_hook = "0.1.7"
 leptos = { version = "0.4.5", features = ["csr", "nightly"] }
 leptos-use = "0.6.2"
 leptos_router = { version = "0.4.6", features = ["csr", "nightly"] }
 openapi = { path = "../openapi/out" }
+tracing-subscriber = { version = "0.3.17" }
+tracing-web = "0.1.2"

@@ -1,6 +1,27 @@
 version: "3.1"
 
 services:
+  # PostgreSQL DataBase
+  db:
+    image: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - 80:80
+    environment:
+      PGADMIN_DEFAULT_EMAIL: postgres@example.com
+      PGADMIN_DEFAULT_PASSWORD: postgres
+    depends_on:
+      - db
+
   # BackEnd service running PoemOpenAPI.
   back:
     build: back/docker
@@ -16,14 +37,12 @@ services:
     working_dir: /opt/back
     environment:
       - CARGO_TARGET_DIR=/opt/cargo_target_dir
-    command: cargo watch -- ./docker/cmd.sh
+      - DATABASE_URL=postgres://postgres:postgres@db/postgres
+    command: cargo watch -- ./dev.sh
     ports:
       - 3000:3000
-    healthcheck:
-      test: curl -f http://localhost:3000/api/spec
-      interval: 2s
-      timeout: 2s
-      start_period: 4m
+    depends_on:
+      - db
 
   # Generate front reqwest client from spec.json.
   openapi:
@@ -32,15 +51,9 @@ services:
     volumes:
      - ./openapi:/opt/openapi
     working_dir: /opt/openapi
-    command: /opt/openapi/docker/cmd.sh
+    command: /opt/openapi/dev.sh
     depends_on:
-      back:
-        condition: service_healthy
-    healthcheck:
-      test: stat /opt/openapi/out/spec.json.md5
-      interval: 1s
-      timeout: 1s
-      start_period: 4m
+      - back
 
   # FrontEnd running leptos and generated reqwest client from openapi.
   front:
@@ -57,6 +70,7 @@ services:
     working_dir: /opt/front
     environment:
       - CARGO_TARGET_DIR=/opt/cargo_target_dir
+      - CARGO_TERM_COLOR=always
     command: >
       trunk -v serve --port 8080 --address 0.0.0.0
         -w /opt/front -w /opt/openapi/out/spec.json.md5
@@ -65,13 +79,7 @@ services:
     ports:
       - 8080:8080
     depends_on:
-      openapi:
-        condition: service_healthy
-    healthcheck:
-      test: curl -f http://localhost:8080/
-      interval: 5s
-      timeout: 2s
-      start_period: 4m
+      - openapi
 
 volumes:
   back_cargo_target_dir:

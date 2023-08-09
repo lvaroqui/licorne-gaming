@@ -1,1 +1,2 @@
-# licorne-gaming
+# Licorne Gaming
+

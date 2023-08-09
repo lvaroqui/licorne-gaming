@@ -15,7 +15,10 @@ pub fn TextInput(
             placeholder=placeholder
             type=t
 
-            on:input=move |ev| { value.set(event_target_value(&ev)); }
+            on:input=move |ev| {
+                value.set(event_target_value(&ev));
+            }
+
             prop:value=value
         />
     }
