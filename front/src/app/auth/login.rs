@@ -8,10 +8,19 @@ use crate::components::TextInput;
 
 #[component]
 pub fn Login() -> impl IntoView {
+    auth::Auth::ensure_logged_out();
+
     let username = create_rw_signal(String::new());
     let password = create_rw_signal(String::new());
 
     let login_action = auth::Auth::login_action();
+
+    create_effect(move |_| {
+        if let Some(_res) = login_action.value().get() {
+            let navigate = use_navigate();
+            navigate("/account", Default::default());
+        }
+    });
 
     view! {
         <div class="flex items-center justify-center w-full h-full">
@@ -23,7 +32,7 @@ pub fn Login() -> impl IntoView {
                         .dispatch(LoginRequest {
                             username: username(),
                             password: password(),
-                        })
+                        });
                 }
             >
 

@@ -11,66 +11,49 @@ use leptos::*;
 use leptos_router::*;
 
 use auth::init_auth_state;
-
 #[component]
 pub fn App() -> impl IntoView {
     init_auth_state();
+
     view! {
-        <Show
-            when=move || auth::Auth::ready().get()
-            fallback=|| view! {  <p>Checking connection...</p> }
-        >
-            {move || {
-                let auth_state_memo = auth::Auth::state_memo();
-
-                // Use memo here as ProtectedRoute does no memoize the result of
-                // the condition causing a re-render when auth_state update.
-                let logged_in = create_memo(
-
-                    move |_| { auth_state_memo.with(|s| s.logged_in()) },
-                );
-
-                view! {
-                    <Router>
-                        <nav>
-                            {move || match auth_state_memo.get() {
-                                auth::AuthState::LoggedIn(user) => {
-                                    view! {  <p>{user.username}</p> }
-                                }
-                                auth::AuthState::LoggedOut => {
-                                    view! {  <p>":'("</p> }
-                                }
-                            }}
-
-                        </nav>
-                        <main class="w-screen h-screen bg-gray-300">
-                            <Routes>
-                                <Route path="/" view=Home/>
-                                <ProtectedRoute
-                                    path="/login"
-                                    view=Login
-                                    condition=move || !logged_in()
-                                    redirect_path="/account"
-                                />
-                                <ProtectedRoute
-                                    path="/register"
-                                    view=Register
-                                    condition=move || !logged_in()
-                                    redirect_path="/account"
-                                />
-                                <ProtectedRoute
-                                    path="/account"
-                                    view=Account
-                                    condition=logged_in
-                                    redirect_path="/login"
-                                />
-                            </Routes>
-                        </main>
-                    </Router>
-                }
-                    .into_view()
-            }}
-
-        </Show>
+        <Router>
+            <nav>
+                {move || match auth::Auth::state().get() {
+                    Some(auth::AuthState::LoggedIn(user)) => {
+                        view! {  <p>{user.username}</p> }.into_view()
+                    }
+                    Some(auth::AuthState::LoggedOut) => {
+                        view! {  <p>":'("</p> }.into_view()
+                    }
+                    None => {
+                        view! { }.into_view()
+                    }
+                }}
+            </nav>
+            <main class="w-screen h-screen bg-gray-300">
+                <Routes>
+                    <Route path="/" view=|| view! {
+                        <Show when=|| auth::Auth::state().get().is_some() fallback=|| view! { <p>"Loading..."</p> }>
+                            <Outlet/>
+                        </Show>
+                    }>
+                        <Route path="/" view=Home/>
+                        <Route
+                            path="/login"
+                            view=Login
+                        />
+                        <Route
+                            path="/register"
+                            view=Register
+                        />
+                        <Route
+                            path="/account"
+                            view=Account
+                        />
+                    </Route>
+                </Routes>
+            </main>
+        </Router>
     }
+    .into_view()
 }

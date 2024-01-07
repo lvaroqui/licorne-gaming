@@ -8,6 +8,8 @@ use crate::components::TextInput;
 
 #[component]
 pub fn Register() -> impl IntoView {
+    auth::Auth::ensure_logged_out();
+
     let username = create_rw_signal(String::new());
     let email = create_rw_signal(String::new());
     let password = create_rw_signal(String::new());

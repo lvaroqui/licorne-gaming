@@ -1,4 +1,5 @@
 use leptos::*;
+use leptos_router::use_navigate;
 use openapi::models::{LoginRequest, RegisterRequest, User};
 
 use crate::client_helper::client_config;
@@ -27,12 +28,23 @@ pub struct Auth {
 }
 
 impl Auth {
-    pub fn ready() -> impl SignalGet<Value = bool> {
-        Signal::derive(move || state().state.with(|s| s.is_some()))
+    pub fn state(
+    ) -> impl SignalGet<Value = Option<AuthState>> + SignalWith<Value = Option<AuthState>> {
+        state().state
     }
 
-    pub fn state_memo() -> Memo<AuthState> {
-        create_memo(move |_| state().state.get().unwrap())
+    pub fn ensure_logged_in() {
+        if !Self::state().get().unwrap().logged_in() {
+            let navigate = use_navigate();
+            navigate("/login", Default::default());
+        }
+    }
+
+    pub fn ensure_logged_out() {
+        if Self::state().get().unwrap().logged_in() {
+            let navigate = use_navigate();
+            navigate("/account", Default::default());
+        }
     }
 
     pub fn register_action() -> Action<RegisterRequest, ()> {
@@ -86,6 +98,6 @@ pub fn init_auth_state() {
     me_action.dispatch(());
 }
 
-fn state() -> Auth {
+pub fn state() -> Auth {
     expect_context::<Auth>()
 }
