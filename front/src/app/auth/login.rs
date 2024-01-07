@@ -7,13 +7,13 @@ use crate::components::Button;
 use crate::components::TextInput;
 
 #[component]
-pub fn Login(cx: Scope) -> impl IntoView {
-    let username = create_rw_signal(cx, String::new());
-    let password = create_rw_signal(cx, String::new());
+pub fn Login() -> impl IntoView {
+    let username = create_rw_signal(String::new());
+    let password = create_rw_signal(String::new());
 
-    let login_action = auth::Auth::login_action(cx);
+    let login_action = auth::Auth::login_action();
 
-    view! { cx,
+    view! {
         <div class="flex items-center justify-center w-full h-full">
             <form
                 class="max-sm:container flex flex-col w-full max-w-sm p-3 m-4 border-2 border-gray-900 shadow-xl bg-slate-700 rounded-xl"
@@ -33,10 +33,8 @@ pub fn Login(cx: Scope) -> impl IntoView {
                 <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
                     <Button on:click=move |e| {
                         e.prevent_default();
-                        let navigate = use_navigate(cx);
-                        request_animation_frame(move || {
-                            let _ = navigate("/register", Default::default());
-                        });
+                        let navigate = use_navigate();
+                        navigate("/register", Default::default());
                     }>Register</Button>
                     <Button>Login</Button>
                 </div>

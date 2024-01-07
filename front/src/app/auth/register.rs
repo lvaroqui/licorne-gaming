@@ -7,22 +7,20 @@ use crate::components::Button;
 use crate::components::TextInput;
 
 #[component]
-pub fn Register(cx: Scope) -> impl IntoView {
-    let username = create_rw_signal(cx, String::new());
-    let email = create_rw_signal(cx, String::new());
-    let password = create_rw_signal(cx, String::new());
-    let register_action = auth::Auth::register_action(cx);
+pub fn Register() -> impl IntoView {
+    let username = create_rw_signal(String::new());
+    let email = create_rw_signal(String::new());
+    let password = create_rw_signal(String::new());
+    let register_action = auth::Auth::register_action();
 
-    create_effect(cx, move |_| {
-        if let Some(res) = register_action.value().get() {
-            let navigate = use_navigate(cx);
-            request_animation_frame(move || {
-                let _ = navigate("/login", Default::default());
-            });
+    create_effect(move |_| {
+        if let Some(_res) = register_action.value().get() {
+            let navigate = use_navigate();
+            navigate("/login", Default::default());
         }
     });
 
-    view! { cx,
+    view! {
         <div class="flex items-center justify-center w-full h-full">
             <form
                 class="max-sm:container flex flex-col w-full max-w-sm p-3 m-4 border-2 border-gray-900 shadow-xl bg-slate-700 rounded-xl"

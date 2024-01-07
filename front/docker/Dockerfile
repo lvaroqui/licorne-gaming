@@ -1,13 +1,12 @@
-FROM alpine:3.18
+FROM ubuntu:22.04
 
-RUN apk add --no-cache rustup musl-dev gcc curl
+RUN apt-get update && apt-get install -y pkg-config curl build-essential libssl-dev
 
 # Install rust
 ENV RUSTUP_HOME /opt/rustup_home
 ENV CARGO_HOME /opt/cargo_home
-RUN rustup-init -y --default-toolchain nightly --target wasm32-unknown-unknown
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y --default-toolchain nightly --target wasm32-unknown-unknown
 ENV PATH /opt/cargo_home/bin:$PATH
 
 # Install tools
-RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | sh
-RUN cargo binstall --no-confirm trunk
+RUN cargo install trunk --version 0.18.3

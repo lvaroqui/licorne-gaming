@@ -1,8 +1,8 @@
 use leptos::*;
 
 #[component]
-pub fn Home(cx: Scope) -> impl IntoView {
-    view! { cx,
+pub fn Home() -> impl IntoView {
+    view! {
         <div>
             <a href="login">Login</a>
         </div>

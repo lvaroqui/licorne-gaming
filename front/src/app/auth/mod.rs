@@ -27,16 +27,16 @@ pub struct Auth {
 }
 
 impl Auth {
-    pub fn ready(cx: Scope) -> impl SignalGet<bool> {
-        Signal::derive(cx, move || state(cx).state.with(|s| s.is_some()))
+    pub fn ready() -> impl SignalGet<Value = bool> {
+        Signal::derive(move || state().state.with(|s| s.is_some()))
     }
 
-    pub fn state_memo(cx: Scope) -> Memo<AuthState> {
-        create_memo(cx, move |_| state(cx).state.get().unwrap())
+    pub fn state_memo() -> Memo<AuthState> {
+        create_memo(move |_| state().state.get().unwrap())
     }
 
-    pub fn register_action(cx: Scope) -> Action<RegisterRequest, ()> {
-        create_action(cx, move |r: &RegisterRequest| {
+    pub fn register_action() -> Action<RegisterRequest, ()> {
+        create_action(move |r: &RegisterRequest| {
             let r = r.clone();
             async move {
                 openapi::apis::default_api::register(client_config(), r)
@@ -46,49 +46,46 @@ impl Auth {
         })
     }
 
-    pub fn login_action(cx: Scope) -> Action<LoginRequest, AuthState> {
-        create_action(cx, move |r: &LoginRequest| {
+    pub fn login_action() -> Action<LoginRequest, AuthState> {
+        create_action(move |r: &LoginRequest| {
             let r = r.clone();
             async move {
                 let s = match openapi::apis::default_api::login(client_config(), r).await {
                     Ok(user) => AuthState::LoggedIn(user),
                     Err(_) => AuthState::LoggedOut,
                 };
-                state(cx).state.set(Some(s.clone()));
+                state().state.set(Some(s.clone()));
                 s
             }
         })
     }
 
-    pub fn logout_action(cx: Scope) -> Action<(), ()> {
-        create_action(cx, move |_| async move {
+    pub fn logout_action() -> Action<(), ()> {
+        create_action(move |_| async move {
             openapi::apis::default_api::logout(client_config())
                 .await
                 .unwrap();
-            state(cx).state.set(Some(AuthState::LoggedOut));
+            state().state.set(Some(AuthState::LoggedOut));
         })
     }
 }
 
-pub fn init_auth_state(cx: Scope) {
-    let me_action = create_action(cx, move |_| async move {
+pub fn init_auth_state() {
+    let me_action = create_action(move |_| async move {
         let s = match openapi::apis::default_api::me(client_config()).await {
             Ok(user) => AuthState::LoggedIn(user),
             Err(_) => AuthState::LoggedOut,
         };
-        state(cx).state.set(Some(s));
+        state().state.set(Some(s));
     });
 
-    provide_context(
-        cx,
-        Auth {
-            state: create_rw_signal(cx, None),
-        },
-    );
+    provide_context(Auth {
+        state: create_rw_signal(None),
+    });
 
     me_action.dispatch(());
 }
 
-fn state(cx: Scope) -> Auth {
-    expect_context::<Auth>(cx)
+fn state() -> Auth {
+    expect_context::<Auth>()
 }
